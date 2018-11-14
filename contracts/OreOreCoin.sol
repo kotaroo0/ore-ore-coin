@@ -7,6 +7,7 @@ contract OreOreCoin {
   uint256 public totalSupply;
   mapping (address => uint256) public balanceOf;
   mapping (address => int8) public blackList;
+  mapping (address => int8) public cashbackRate;
   address public owner;
 
   modifier onlyOwner() {
@@ -19,6 +20,8 @@ contract OreOreCoin {
   event DeleteFromBlacklist(address indexed  target);
   event RejectedPaymentToBlacklistedAddr(address indexed from, address indexed to, uint256 value);
   event RejectedPaymentFromBlacklistedAddr(address indexed from, address indexed to, uint256 value);
+  event SetCashback(address indexed addr, int8 rate);
+  event Cashback(address indexed from, address indexed to, uint256 value);
 
   constructor(uint256 _supply, string _name, string _symbol, uint8 _decimals) public {
     balanceOf[msg.sender] = _supply;
@@ -39,6 +42,19 @@ contract OreOreCoin {
     emit DeleteFromBlacklist(_addr);
   }
 
+  function setCashbackRate(int8 _rate) {
+    if (_rate < 1) {
+      _rate = 0;
+    } else if (_rate > 100) {
+      _rate = 100;
+    }
+    cashbackRate[msg.sender] = _rate;
+    if (_rate < 1) {
+      _rate = 0;
+    }
+    emit SetCashback(msg.sender, _rate);
+  }
+
   function transfer(address _to, uint256 _value) public {
     require(balanceOf[msg.sender] >= _value);
     require(balanceOf[_to] + _value >= balanceOf[_to]);
@@ -48,10 +64,15 @@ contract OreOreCoin {
     } else if (blackList[_to] > 0) {
       emit RejectedPaymentToBlacklistedAddr(msg.sender, _to, _value);
     }else{
-      balanceOf[msg.sender] -= _value;
-      balanceOf[_to] += _value;
+
+      uint256 cashback = 0;
+      if (cashbackRate[_to] > 0) cashback = _value / 100 * uint256(cashbackRate[_to]);
+
+      balanceOf[msg.sender] -= (_value - cashback);
+      balanceOf[_to] += (_value - cashback);
 
       emit Transfer(msg.sender, _to, _value);
+      emit Cashback(_to, msg.sender, cashback);
     }
   }
 }
