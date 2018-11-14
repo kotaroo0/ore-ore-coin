@@ -73,4 +73,9 @@ contract("OreOreCoin", async accounts => {
       balanceOfaccount2.toNumber() + amount
     );
   });
+
+  it("should get cashback", async () => {
+    // TODO: ユーザーを変えてテスト
+    let oreOreCoin = await OreOreCoin.deployed(10000, "OreOreCoin", "oc", 0);
+  });
 });
