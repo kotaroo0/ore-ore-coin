@@ -1,19 +1,16 @@
 pragma solidity ^0.4.18;
 
-contract OreOreCoin {
+import "./Owned.sol";
+import "./Members.sol";
+
+contract OreOreCoin is Owned{
   string public name;
   string public symbol;
   uint8 public decimals;
   uint256 public totalSupply;
   mapping (address => uint256) public balanceOf;
   mapping (address => int8) public blackList;
-  mapping (address => int8) public cashbackRate;
-  address public owner;
-
-  modifier onlyOwner() {
-    require(msg.sender == owner);
-    _;
-  }
+  mapping (address => Members) public members;
 
   event Transfer(address indexed from, address indexed to, uint256 value);
   event Blacklisted(address indexed  target);
@@ -29,30 +26,20 @@ contract OreOreCoin {
     symbol = _symbol;
     decimals = _decimals;
     totalSupply = _supply;
-    owner = msg.sender;
   }
 
-  function blacklisting(address _addr) onlyOwner {
+  function blacklisting(address _addr) public onlyOwner {
     blackList[_addr] = 1;
     emit Blacklisted(_addr);
   }
 
-  function deletedFromBlacklist(address _addr) onlyOwner {
+  function deletedFromBlacklist(address _addr) public onlyOwner {
     blackList[_addr] = -1;
     emit DeleteFromBlacklist(_addr);
   }
 
-  function setCashbackRate(int8 _rate) {
-    if (_rate < 1) {
-      _rate = 0;
-    } else if (_rate > 100) {
-      _rate = 100;
-    }
-    cashbackRate[msg.sender] = _rate;
-    if (_rate < 1) {
-      _rate = 0;
-    }
-    emit SetCashback(msg.sender, _rate);
+  function setMembers(Members _members) public {
+    members[msg.sender] = Members(_members);
   }
 
   function transfer(address _to, uint256 _value) public {
@@ -66,7 +53,10 @@ contract OreOreCoin {
     }else{
 
       uint256 cashback = 0;
-      if (cashbackRate[_to] > 0) cashback = _value / 100 * uint256(cashbackRate[_to]);
+      if(members[_to] > address(0)) {
+        cashback = _value / 100 * uint256(members[_to].getCashbackRate(msg.sender));
+        members[_to].updateHistory(msg.sender, _value);
+      }
 
       balanceOf[msg.sender] -= (_value - cashback);
       balanceOf[_to] += (_value - cashback);
