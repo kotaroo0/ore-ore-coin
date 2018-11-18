@@ -1,4 +1,6 @@
 var OreOreCoin = artifacts.require("./OreOreCoin.sol");
+var Owned = artifacts.require("./Owned.sol");
+var Members = artifacts.require("./Members.sol");
 
 contract("OreOreCoin", async accounts => {
   it("should be correct prop name", async () => {
@@ -74,8 +76,27 @@ contract("OreOreCoin", async accounts => {
     );
   });
 
-  it("should get cashback", async () => {
+  it.skip("should func member feature", async () => {
     // TODO: ユーザーを変えてテスト
+
     let oreOreCoin = await OreOreCoin.deployed(10000, "OreOreCoin", "oc", 0);
+    let owned = await Owned.deployed();
+    let members = await Members.deployed();
+
+    let account1 = accounts[0];
+    let account2 = accounts[1];
+
+    initial_owner = await members.owner();
+    assert.equal(initial_owner, account1);
+
+    await members.pushStatus("gold", 15, 1500, 10);
+    await members.pushStatus("silver", 5, 500, 5);
+    await members.pushStatus("bronze", 0, 0, 0);
+
+    await members.transferOwnership(account2);
+  });
+
+  it.skip("should get cashback", async () => {
+    // TODO: ユーザーを変えてテスト
   });
 });
