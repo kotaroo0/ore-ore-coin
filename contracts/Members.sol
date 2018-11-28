@@ -1,6 +1,6 @@
 pragma solidity ^0.4.8;
 
-import './Owned.sol';
+import "./Owned.sol";
 
 contract Members is Owned {
     address public coin;
@@ -63,7 +63,7 @@ contract Members is Owned {
         tradingHistory[_member].statusIndex = index;
     }
 
-    function getCashbackRate(address _member) public constant returns (int8 rate) {
+    function getCashbackRate(address _member) public view returns (int8 rate) {
         return status[tradingHistory[_member].statusIndex].rate;
     }
 }
