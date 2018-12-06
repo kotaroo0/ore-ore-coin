@@ -2,7 +2,7 @@ pragma solidity ^0.4.8;
 
 import "./Owned.sol";
 import "./Members.sol";
-import "./Oreorecoin.sol";
+import "./OreOreCoin.sol";
 
 contract Crowdsale is Owned {
     uint256 public fundingGoal;
@@ -56,11 +56,11 @@ contract Crowdsale is Owned {
     }
 
     function start(uint _durationInMinutes) onlyOwner public {
-        require(fundingGoal != 0 && price != 0 && transferableToken != 0 && tokenReward == address(0) && _durationInMinutes != 0 && startTime == 0);
+        require(fundingGoal != 0 && price != 0 && transferableToken != 0 && tokenReward != address(0) && _durationInMinutes != 0 && startTime == 0);
 
         if (tokenReward.balanceOf(this) >= transferableToken) {
             startTime = now;
-            deadline = now + _durationInMinutes;
+            deadline = now + _durationInMinutes * 1 minutes;
             isOpened = true;
             emit CrowdsaleStart(fundingGoal, deadline, transferableToken, owner);
         }
@@ -78,12 +78,22 @@ contract Crowdsale is Owned {
         }
     }
 
-    function getRemainingTimeTheToken() constant public returns(uint min, uint shortage, uint remainToken) {
+    function getRemainingTimeEthToken() constant public returns(uint min, uint shortage, uint remainToken) {
         if (now < deadline) {
             min = (deadline - now) / (1 minutes);
         }
         shortage = (fundingGoal - address(this).balance) / (1 ether);
         remainToken = transferableToken - soldToken;
+    }
+
+    function checkGoalReached() afterDeadline {
+        if (isOpened) {
+            if (this.balance >= fundingGoal) {
+                fundingGoalReached = true;
+            }
+            isOpened = false;
+            emit CheckGoalReached(owner, fundingGoal, this.balance, fundingGoalReached, soldToken);
+        }
     }
 
     function withdrawalOwner() onlyOwner public {
